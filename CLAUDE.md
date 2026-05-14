@@ -181,15 +181,20 @@ shortcuts: [Google, YouTube, GitHub]
 
 ## 背景主題
 
-三種純 CSS radial-gradient 主題（`newtab.js:203-207`）：
+三種 CSS gradient 主題（`newtab.js updateBackground()`）：
+
+`cozy-room` 與 `pixel-forest` 使用三分層 `linear-gradient`，分界點對應 Zone System（groundLine = 65% 視窗高度）：
+- `0% → 63%`：空中（天空 / 林冠）
+- `63% → 67%`（hard stop）：地面層
+- `67% → 100%`：水中（海洋 / 沼澤）
 
 | `data-bg` | 描述 |
 |---|---|
-| `default` | `#1e293b → #0f172a`（預設深色） |
-| `cozy-room` | `#475569 → #1e293b`（溫馨小屋） |
-| `pixel-forest` | `#064e3b → #022c22`（像素森林） |
+| `default` | `radial-gradient` 深藍（不含三分層） |
+| `cozy-room` | 夕陽沙灘：紫紅天空 → 金沙地面 → 青藍深海 |
+| `pixel-forest` | 像素森林：夜藍天空 → 林冠 → 深棕林地 → 暗色沼澤 |
 
-目前均為純漸層，無實際像素圖素材。
+背景均為純 CSS gradient，無圖片素材。如需圖片素材，在 `#background-layer` 加入 `background-image` 並與 gradient 疊加。
 
 ## 快捷入口
 

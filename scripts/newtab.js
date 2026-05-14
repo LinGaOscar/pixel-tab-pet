@@ -200,9 +200,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const updateBackground = (theme) => {
+        // 63% = air/ground border, 67% = ground/water border（對應 groundLine = h*0.65）
         const themes = {
-            'cozy-room': 'radial-gradient(circle at center, #475569 0%, #1e293b 100%)',
-            'pixel-forest': 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)',
+            'cozy-room': `linear-gradient(to bottom,
+                #2E1760 0%, #C5395B 30%, #E87830 55%, #F4C842 63%,
+                #C89610 63%, #A06B08 66%,
+                #3DADA8 67%, #1A5E7A 84%, #0A2535 100%)`,
+            'pixel-forest': `linear-gradient(to bottom,
+                #0B1A33 0%, #142D55 25%, #1F5738 50%, #3A8050 63%,
+                #5C3D1A 63%, #3A1F0A 66%,
+                #1B4030 67%, #0D2318 84%, #060F0A 100%)`,
             'default': 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)'
         };
         bgLayer.style.background = themes[theme] || themes['default'];
