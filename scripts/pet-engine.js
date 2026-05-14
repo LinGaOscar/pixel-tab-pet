@@ -17,12 +17,34 @@ class PetEngine {
         this.direction = 1;
         this.speed = 1.5;
         this.currentState = 'idle';
-        
+        this.alive = true;
+        this._lastWidth = window.innerWidth;
+        this._lastHeight = window.innerHeight;
+
         this.init();
     }
 
     init() {
         this.el.addEventListener('click', () => this.handleInteraction());
+
+        this._onMouseMove = (e) => {
+            if (this.currentState === 'walk' || this.currentState === 'jump') return;
+            this.direction = e.clientX > this.posX + 64 ? 1 : -1;
+        };
+        window.addEventListener('mousemove', this._onMouseMove);
+
+        this._onResize = () => {
+            const sx = window.innerWidth / this._lastWidth;
+            const sy = window.innerHeight / this._lastHeight;
+            this.posX *= sx;
+            this.posY *= sy;
+            this.targetX *= sx;
+            this.targetY *= sy;
+            this._lastWidth = window.innerWidth;
+            this._lastHeight = window.innerHeight;
+        };
+        window.addEventListener('resize', this._onResize);
+
         this.startBrain();
         this.physicsLoop();
     }
@@ -47,16 +69,20 @@ class PetEngine {
 
     startBrain() {
         const tick = () => {
-            if (this.currentState === 'idle' || this.currentState === 'sleep') {
+            if (!this.alive) return;
+            if (this.currentState === 'idle') {
                 if (Math.random() < 0.4) {
                     this.setState('walk');
-                    // Pick a random target within window bounds
                     const margin = 100;
                     this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - 128);
                     this.targetY = margin + Math.random() * (window.innerHeight - margin * 2 - 128);
                     this.direction = this.targetX > this.posX ? 1 : -1;
                 } else if (Math.random() < 0.1) {
-                    this.setState(this.currentState === 'sleep' ? 'idle' : 'sleep');
+                    this.setState('sleep');
+                }
+            } else if (this.currentState === 'sleep') {
+                if (Math.random() < 0.1) {
+                    this.setState('idle');
                 }
             }
             setTimeout(tick, 3000 + Math.random() * 5000);
@@ -66,6 +92,7 @@ class PetEngine {
 
     physicsLoop() {
         const update = () => {
+            if (!this.alive) return;
             if (this.currentState === 'walk') {
                 const dx = this.targetX - this.posX;
                 const dy = this.targetY - this.posY;
@@ -96,6 +123,9 @@ class PetEngine {
     }
 
     destroy() {
+        this.alive = false;
+        window.removeEventListener('mousemove', this._onMouseMove);
+        window.removeEventListener('resize', this._onResize);
         this.el.remove();
     }
 }

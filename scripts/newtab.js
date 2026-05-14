@@ -8,9 +8,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addPetBtn = document.getElementById('add-pet-btn');
     const petListAdmin = document.getElementById('pet-list-admin');
     const bgLayer = document.getElementById('background-layer');
+    const shortcutListAdmin = document.getElementById('shortcut-list-admin');
+    const scAddBtn = document.getElementById('sc-add-btn');
+    const scName = document.getElementById('sc-name');
+    const scUrl = document.getElementById('sc-url');
+    const scIcon = document.getElementById('sc-icon');
 
     const settings = await AppState.load();
     const petInstances = new Map();
+
+    const PET_NAMES = {
+        cat1: '英短貓', cat2: '暹羅貓', cat3: '緬因貓',
+        dog1: '柴犬',  dog2: '柯基',   dog3: '黃金獵犬',
+        bird1: '老鷹', bird2: '貓頭鷹', bird3: '鸚鵡',
+        fish1: '金魚', fish2: '小丑魚', fish3: '鬥魚'
+    };
+    let selectedPetType = 'cat1';
 
     // 初始化寵物
     const spawnPet = (petData) => {
@@ -25,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     addPetBtn.onclick = async () => {
         const newPet = {
             id: Date.now(),
-            type: 'cat1',
+            type: selectedPetType,
             x: Math.random() * 0.8 + 0.1,
             y: Math.random() * 0.8 + 0.1
         };
@@ -41,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const item = document.createElement('div');
             item.className = 'pet-admin-item';
             item.innerHTML = `
-                <span>${pet.type} #${index + 1}</span>
+                <span>${PET_NAMES[pet.type] || pet.type} #${index + 1}</span>
                 <button class="delete-pet" data-id="${pet.id}">撤回</button>
             `;
             item.querySelector('.delete-pet').onclick = async () => {
@@ -55,6 +68,60 @@ document.addEventListener('DOMContentLoaded', async () => {
             petListAdmin.appendChild(item);
         });
     }
+
+    // 種類選擇
+    document.querySelectorAll('.pet-option').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.pet-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPetType = btn.dataset.type;
+        };
+    });
+
+    // 快捷入口
+    function renderShortcuts() {
+        const container = document.getElementById('shortcuts');
+        container.innerHTML = '';
+        settings.shortcuts.forEach(s => {
+            const a = document.createElement('a');
+            a.href = s.url;
+            a.className = 'shortcut-item';
+            a.innerHTML = `<span class="shortcut-icon">${s.icon}</span><span class="shortcut-name">${s.name}</span>`;
+            container.appendChild(a);
+        });
+    }
+
+    function renderShortcutAdmin() {
+        shortcutListAdmin.innerHTML = '';
+        settings.shortcuts.forEach((sc, index) => {
+            const item = document.createElement('div');
+            item.className = 'pet-admin-item';
+            item.innerHTML = `<span>${sc.icon} ${sc.name}</span><button class="delete-pet">移除</button>`;
+            item.querySelector('button').onclick = async () => {
+                settings.shortcuts.splice(index, 1);
+                renderShortcuts();
+                renderShortcutAdmin();
+                await AppState.save(settings);
+            };
+            shortcutListAdmin.appendChild(item);
+        });
+    }
+
+    scAddBtn.onclick = async () => {
+        const name = scName.value.trim();
+        let url = scUrl.value.trim();
+        const icon = scIcon.value.trim() || name[0]?.toUpperCase() || '?';
+        if (!name || !url) return;
+        if (!/^https?:\/\//.test(url)) url = 'https://' + url;
+        settings.shortcuts.push({ name, url, icon });
+        renderShortcuts();
+        renderShortcutAdmin();
+        scName.value = scUrl.value = scIcon.value = '';
+        await AppState.save(settings);
+    };
+
+    renderShortcuts();
+    renderShortcutAdmin();
 
     // 更新時鐘
     const updateClock = () => {

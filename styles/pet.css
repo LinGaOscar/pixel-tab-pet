@@ -1,8 +1,21 @@
+/*
+ * Sprite Sheet 規格（每張 PNG 均為 1024×1024）：
+ *   4 欄 × 4 排，每格原始 256×256px
+ *   顯示縮放 0.5x → 顯示尺寸 128×128，background-size: 512px 512px
+ *
+ * 排列：
+ *   Row 0 (y=   0): 待機 4 幀
+ *   Row 1 (y=-128): 走路 4 幀
+ *   Row 2 (y=-256): 跳躍 2 幀 (x=0,-128) | 睡覺 2 幀 (x=-256,-384)
+ *   Row 3 (y=-384): 配件圖示（動畫不使用）
+ */
+
 #pet-stage .pet {
     width: 128px;
     height: 128px;
     image-rendering: pixelated;
-    background-size: 400% 400%;
+    /* 1024px 縮至 512px = 每格 128px，對應顯示容器大小 */
+    background-size: 512px 512px;
     background-repeat: no-repeat;
     position: absolute;
     top: 0;
@@ -12,18 +25,13 @@
     will-change: transform;
 }
 
-#pet:active {
-    transform: scale(0.95);
-}
-
-/* 不同種類的寵物素材路徑 */
-/* 預設為 cat1 */
-.pet-cat1 { background-image: url('../assets/pets/cat1.png'); }
-.pet-cat2 { background-image: url('../assets/pets/cat2.png'); }
-.pet-cat3 { background-image: url('../assets/pets/cat3.png'); }
-.pet-dog1 { background-image: url('../assets/pets/dog1.png'); }
-.pet-dog2 { background-image: url('../assets/pets/dog2.png'); }
-.pet-dog3 { background-image: url('../assets/pets/dog3.png'); }
+/* 寵物素材路徑 */
+.pet-cat1  { background-image: url('../assets/pets/cat1.png'); }
+.pet-cat2  { background-image: url('../assets/pets/cat2.png'); }
+.pet-cat3  { background-image: url('../assets/pets/cat3.png'); }
+.pet-dog1  { background-image: url('../assets/pets/dog1.png'); }
+.pet-dog2  { background-image: url('../assets/pets/dog2.png'); }
+.pet-dog3  { background-image: url('../assets/pets/dog3.png'); }
 .pet-bird1 { background-image: url('../assets/pets/bird1.png'); }
 .pet-bird2 { background-image: url('../assets/pets/bird2.png'); }
 .pet-bird3 { background-image: url('../assets/pets/bird3.png'); }
@@ -31,49 +39,32 @@
 .pet-fish2 { background-image: url('../assets/pets/fish2.png'); }
 .pet-fish3 { background-image: url('../assets/pets/fish3.png'); }
 
-/* 動畫定義 */
-/* 第一排：待機 (4 幀) */
+/* Row 0：待機 4 幀，x 從 0 向左移 4×128=512px */
 @keyframes pet-idle {
-    from { background-position: 0% 0%; }
-    to { background-position: 100% 0%; }
+    from { background-position:    0px 0px; }
+    to   { background-position: -512px 0px; }
 }
 
-/* 第二排：走路 (4 幀) */
+/* Row 1：走路 4 幀 */
 @keyframes pet-walk {
-    from { background-position: 0% 33.33%; }
-    to { background-position: 100% 33.33%; }
+    from { background-position:    0px -128px; }
+    to   { background-position: -512px -128px; }
 }
 
-/* 第三排：跳躍 (2 幀) - 取前半部 */
+/* Row 2 前半：跳躍 2 幀（x: 0 → -256px） */
 @keyframes pet-jump {
-    from { background-position: 0% 66.66%; }
-    to { background-position: 33.33% 66.66%; }
+    from { background-position:    0px -256px; }
+    to   { background-position: -256px -256px; }
 }
 
-/* 第三排：睡覺 (2 幀) - 取後半部 */
+/* Row 2 後半：睡覺 2 幀（x: -256px → -512px） */
 @keyframes pet-sleep {
-    from { background-position: 66.66% 66.66%; }
-    to { background-position: 100% 66.66%; }
+    from { background-position: -256px -256px; }
+    to   { background-position: -512px -256px; }
 }
 
 /* 狀態 Class */
-.state-idle {
-    animation: pet-idle 0.8s steps(4) infinite;
-}
-
-.state-walk {
-    animation: pet-walk 0.6s steps(4) infinite;
-}
-
-.state-jump {
-    animation: pet-jump 0.4s steps(2) infinite;
-}
-
-.state-sleep {
-    animation: pet-sleep 1.5s steps(2) infinite;
-}
-
-/* 翻轉 (向左走) */
-.flip-x {
-    transform: scaleX(-1);
-}
+.state-idle  { animation: pet-idle  0.8s steps(4) infinite; }
+.state-walk  { animation: pet-walk  0.6s steps(4) infinite; }
+.state-jump  { animation: pet-jump  0.4s steps(2) infinite; }
+.state-sleep { animation: pet-sleep 1.5s steps(2) infinite; }

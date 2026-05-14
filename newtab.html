@@ -46,6 +46,23 @@
         <div id="settings-panel" class="hidden">
             <h2>個人化設定</h2>
             <div class="setting-group">
+                <label>召喚種類</label>
+                <div class="pet-selector" id="pet-type-selector">
+                    <button class="pet-option active" data-type="cat1">英短貓</button>
+                    <button class="pet-option" data-type="cat2">暹羅貓</button>
+                    <button class="pet-option" data-type="cat3">緬因貓</button>
+                    <button class="pet-option" data-type="dog1">柴犬</button>
+                    <button class="pet-option" data-type="dog2">柯基</button>
+                    <button class="pet-option" data-type="dog3">黃金獵犬</button>
+                    <button class="pet-option" data-type="bird1">老鷹</button>
+                    <button class="pet-option" data-type="bird2">貓頭鷹</button>
+                    <button class="pet-option" data-type="bird3">鸚鵡</button>
+                    <button class="pet-option" data-type="fish1">金魚</button>
+                    <button class="pet-option" data-type="fish2">小丑魚</button>
+                    <button class="pet-option" data-type="fish3">鬥魚</button>
+                </div>
+            </div>
+            <div class="setting-group">
                 <label>寵物管理</label>
                 <div id="pet-list-admin">
                     <!-- 由 JS 動態生成 -->
@@ -57,6 +74,16 @@
                     <button class="bg-option active" data-bg="default">預設深色</button>
                     <button class="bg-option" data-bg="cozy-room">溫馨小屋</button>
                     <button class="bg-option" data-bg="pixel-forest">像素森林</button>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label>快捷入口</label>
+                <div id="shortcut-list-admin"></div>
+                <div class="shortcut-add-form">
+                    <input id="sc-name" placeholder="名稱" maxlength="12">
+                    <input id="sc-url" placeholder="網址">
+                    <input id="sc-icon" placeholder="圖示" maxlength="2">
+                    <button id="sc-add-btn" class="shortcut-add-btn">新增</button>
                 </div>
             </div>
             <button id="settings-close">關閉</button>
