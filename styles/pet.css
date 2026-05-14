@@ -11,11 +11,11 @@
  */
 
 #pet-stage .pet {
-    width: 128px;
-    height: 128px;
+    width: var(--pet-size);
+    height: var(--pet-size);
     image-rendering: pixelated;
-    /* 1024px 縮至 512px = 每格 128px，對應顯示容器大小 */
-    background-size: 512px 512px;
+    /* background-size = 4×pet-size，對應 1024px 縮放後的 sprite sheet */
+    background-size: calc(4 * var(--pet-size)) calc(4 * var(--pet-size));
     background-repeat: no-repeat;
     position: absolute;
     top: 0;
@@ -39,28 +39,28 @@
 .pet-fish2 { background-image: url('../assets/pets/fish2.png'); }
 .pet-fish3 { background-image: url('../assets/pets/fish3.png'); }
 
-/* Row 0：待機 4 幀，x 從 0 向左移 4×128=512px */
+/* Row 0：待機 4 幀 */
 @keyframes pet-idle {
-    from { background-position:    0px 0px; }
-    to   { background-position: -512px 0px; }
+    from { background-position: 0 0; }
+    to   { background-position: calc(-4 * var(--pet-size)) 0; }
 }
 
 /* Row 1：走路 4 幀 */
 @keyframes pet-walk {
-    from { background-position:    0px -128px; }
-    to   { background-position: -512px -128px; }
+    from { background-position: 0 calc(-1 * var(--pet-size)); }
+    to   { background-position: calc(-4 * var(--pet-size)) calc(-1 * var(--pet-size)); }
 }
 
-/* Row 2 前半：跳躍 2 幀（x: 0 → -256px） */
+/* Row 2 前半：跳躍 2 幀 */
 @keyframes pet-jump {
-    from { background-position:    0px -256px; }
-    to   { background-position: -256px -256px; }
+    from { background-position: 0 calc(-2 * var(--pet-size)); }
+    to   { background-position: calc(-2 * var(--pet-size)) calc(-2 * var(--pet-size)); }
 }
 
-/* Row 2 後半：睡覺 2 幀（x: -256px → -512px） */
+/* Row 2 後半：睡覺 2 幀 */
 @keyframes pet-sleep {
-    from { background-position: -256px -256px; }
-    to   { background-position: -512px -256px; }
+    from { background-position: calc(-2 * var(--pet-size)) calc(-2 * var(--pet-size)); }
+    to   { background-position: calc(-4 * var(--pet-size)) calc(-2 * var(--pet-size)); }
 }
 
 /* 拖曳中 */

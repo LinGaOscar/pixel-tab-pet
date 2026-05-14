@@ -90,6 +90,14 @@
             <button id="settings-close">關閉</button>
         </div>
 
+        <!-- 開發用分層預覽（按 ` 切換） -->
+        <div id="zone-overlay" style="display:none" aria-hidden="true">
+            <div id="zone-air"    class="zone-band"><span></span></div>
+            <div id="zone-ground" class="zone-band"><span></span></div>
+            <div id="zone-water"  class="zone-band"><span></span></div>
+            <div id="zone-hint">按 ` 隱藏</div>
+        </div>
+
         <!-- 寵物小屋 -->
         <div id="pet-house">
             <div class="house-icon">🏠</div>
@@ -100,5 +108,40 @@
     <script src="scripts/state.js"></script>
     <script src="scripts/pet-engine.js"></script>
     <script src="scripts/newtab.js"></script>
+    <script>
+    (function () {
+        function updateOverlay() {
+            const h  = window.innerHeight;
+            const sz = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pet-size')) || 128;
+            const groundLine = h * 0.65;
+            const bands = {
+                air:    { top: 20,              height: groundLine - sz - 30 - 20 },
+                ground: { top: groundLine - sz,  height: sz },
+                water:  { top: groundLine + 15,  height: Math.max(20, h - sz - 20 - (groundLine + 15)) }
+            };
+            const labels = {
+                air:    `空中   20 – ${Math.round(groundLine - sz - 30)} px`,
+                ground: `地面   ${Math.round(groundLine - sz)} – ${Math.round(groundLine)} px  (pet ${sz}px)`,
+                water:  `水域   ${Math.round(groundLine + 15)} – ${Math.round(h - sz - 20)} px`
+            };
+            Object.keys(bands).forEach(k => {
+                const el = document.getElementById('zone-' + k);
+                el.style.top    = bands[k].top + 'px';
+                el.style.height = bands[k].height + 'px';
+                el.querySelector('span').textContent = labels[k];
+            });
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key !== '`') return;
+            const ov = document.getElementById('zone-overlay');
+            const show = ov.style.display === 'none';
+            ov.style.display = show ? 'block' : 'none';
+            if (show) updateOverlay();
+        });
+        window.addEventListener('resize', () => {
+            if (document.getElementById('zone-overlay').style.display !== 'none') updateOverlay();
+        });
+    })();
+    </script>
 </body>
 </html>

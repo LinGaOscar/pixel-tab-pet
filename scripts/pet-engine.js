@@ -1,16 +1,28 @@
 class PetEngine {
+    static petSizePx() {
+        const s = Math.min(window.innerWidth, window.innerHeight) / 8;
+        return Math.round(Math.max(48, Math.min(128, s)));
+    }
+
+    static applyCSSVar() {
+        document.documentElement.style.setProperty('--pet-size', PetEngine.petSizePx() + 'px');
+    }
+
     constructor(container, data) {
         this.container = container;
         this.id = data.id;
         this.type = data.type;
-        
+
+        this._sz = PetEngine.petSizePx();
+        PetEngine.applyCSSVar();
+
         this.el = document.createElement('div');
         this.el.id = `pet-${this.id}`;
         this.el.className = `pet pet-${this.type} state-idle`;
         this.container.appendChild(this.el);
 
         this.posX = data.x * window.innerWidth;
-        this.posY = data.y * window.innerHeight;
+        this.posY = this._snapZoneY(data.y * window.innerHeight);
         this.targetX = this.posX;
         this.targetY = this.posY;
         
@@ -45,8 +57,8 @@ class PetEngine {
                 this.el.classList.add('dragging');
                 this.setState('idle');
             }
-            this.posX = e.clientX - 64;
-            this.posY = e.clientY - 64;
+            this.posX = e.clientX - this._sz / 2;
+            this.posY = e.clientY - this._sz / 2;
         };
         window.addEventListener('pointermove', this._onPointerMove);
 
@@ -68,7 +80,7 @@ class PetEngine {
 
         this._onMouseMove = (e) => {
             if (this.dragging || this.currentState === 'walk' || this.currentState === 'jump') return;
-            this.direction = e.clientX > this.posX + 64 ? 1 : -1;
+            this.direction = e.clientX > this.posX + this._sz / 2 ? 1 : -1;
         };
         window.addEventListener('mousemove', this._onMouseMove);
 
@@ -79,6 +91,8 @@ class PetEngine {
             this.posY *= sy;
             this.targetX *= sx;
             this.targetY *= sy;
+            this._sz = PetEngine.petSizePx();
+            PetEngine.applyCSSVar();
             this._lastWidth = window.innerWidth;
             this._lastHeight = window.innerHeight;
         };
@@ -86,6 +100,34 @@ class PetEngine {
 
         this.startBrain();
         this.physicsLoop();
+    }
+
+    isGroundPet() { return this.type.startsWith('cat') || this.type.startsWith('dog'); }
+    isAirPet()    { return this.type.startsWith('bird'); }
+    isWaterPet()  { return this.type.startsWith('fish'); }
+
+    _getZone() {
+        const h  = window.innerHeight;
+        const sz = this._sz;
+        const groundLine = h * 0.65;
+        const waterMinY  = groundLine + 15;
+        const waterMaxY  = h - sz - 20;
+        return {
+            groundY:   groundLine - sz,
+            airMinY:   20,
+            airMaxY:   groundLine - sz - 30,
+            waterMinY,
+            waterMaxY: Math.max(waterMinY + 20, waterMaxY)
+        };
+    }
+
+    // 依物種把初始 Y 吸附到對應層，避免存檔位置跨層
+    _snapZoneY(rawY) {
+        const z = this._getZone();
+        if (this.isGroundPet()) return z.groundY;
+        if (this.isWaterPet())  return Math.max(z.waterMinY, Math.min(z.waterMaxY, rawY));
+        if (this.isAirPet())    return Math.max(z.airMinY,   Math.min(z.airMaxY,   rawY));
+        return rawY;
     }
 
     setPetType(type) {
@@ -109,16 +151,61 @@ class PetEngine {
     startBrain() {
         const tick = () => {
             if (!this.alive) return;
+            const margin = 100;
+            const z = this._getZone();
+
             if (this.currentState === 'idle') {
-                if (Math.random() < 0.4) {
-                    this.setState('walk');
-                    const margin = 100;
-                    this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - 128);
-                    this.targetY = margin + Math.random() * (window.innerHeight - margin * 2 - 128);
-                    this.direction = this.targetX > this.posX ? 1 : -1;
-                } else if (Math.random() < 0.1) {
-                    this.setState('sleep');
+                if (this.isGroundPet()) {
+                    // 狗貓：只在地板水平移動
+                    if (Math.random() < 0.4) {
+                        this.setState('walk');
+                        this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
+                        this.targetY = z.groundY;
+                        this.direction = this.targetX > this.posX ? 1 : -1;
+                    } else if (Math.random() < 0.1) {
+                        this.setState('sleep');
+                    }
+
+                } else if (this.isAirPet()) {
+                    const onGround = this.posY >= z.groundY - 5;
+                    if (onGround) {
+                        // 落地狀態：高機率起飛，偶爾走一下或休息
+                        if (Math.random() < 0.65) {
+                            this.setState('walk');
+                            this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
+                            this.targetY = z.airMinY + Math.random() * (z.airMaxY - z.airMinY);
+                            this.direction = this.targetX > this.posX ? 1 : -1;
+                        } else if (Math.random() < 0.5) {
+                            this.setState('walk');
+                            this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
+                            this.targetY = z.groundY;
+                            this.direction = this.targetX > this.posX ? 1 : -1;
+                        } else if (Math.random() < 0.2) {
+                            this.setState('sleep');
+                        }
+                    } else {
+                        // 飛行狀態：主要留在空中，低機率降落
+                        this.setState('walk');
+                        if (Math.random() < 0.10) {
+                            this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
+                            this.targetY = z.groundY;
+                        } else {
+                            this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
+                            this.targetY = z.airMinY + Math.random() * (z.airMaxY - z.airMinY);
+                        }
+                        this.direction = this.targetX > this.posX ? 1 : -1;
+                    }
+
+                } else if (this.isWaterPet()) {
+                    // 魚類：在水層自由游動
+                    if (Math.random() < 0.4) {
+                        this.setState('walk');
+                        this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
+                        this.targetY = z.waterMinY + Math.random() * (z.waterMaxY - z.waterMinY);
+                        this.direction = this.targetX > this.posX ? 1 : -1;
+                    }
                 }
+
             } else if (this.currentState === 'sleep') {
                 if (Math.random() < 0.1) {
                     this.setState('idle');
@@ -148,8 +235,13 @@ class PetEngine {
             
             if (!this.dragging) {
                 const margin = 20;
-                this.posX = Math.max(margin, Math.min(window.innerWidth - 128 - margin, this.posX));
-                this.posY = Math.max(margin, Math.min(window.innerHeight - 128 - margin, this.posY));
+                const sz = this._sz;
+                this.posX = Math.max(margin, Math.min(window.innerWidth - sz - margin, this.posX));
+                if (this.isGroundPet()) {
+                    this.posY = this._getZone().groundY;
+                } else {
+                    this.posY = Math.max(margin, Math.min(window.innerHeight - sz - margin, this.posY));
+                }
             }
 
             this.updateDOM();
