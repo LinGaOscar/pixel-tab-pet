@@ -44,7 +44,13 @@ body {
     height: 100%;
     z-index: -1;
     background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-    transition: background 0.5s ease;
+    transition: opacity 0.4s ease;
+}
+#background-layer.theme-pixel-forest {
+    background: url('../assets/bg-pixel-forest.svg') center / cover no-repeat;
+}
+#background-layer.theme-cozy-room {
+    background: url('../assets/bg-cozy-room.svg') center / cover no-repeat;
 }
 
 main {

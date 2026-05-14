@@ -200,12 +200,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const updateBackground = (theme) => {
-        const themes = {
-            'cozy-room': 'radial-gradient(circle at center, #475569 0%, #1e293b 100%)',
-            'pixel-forest': 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)',
-            'default': 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)'
-        };
-        bgLayer.style.background = themes[theme] || themes['default'];
+        bgLayer.style.background = '';
+        bgLayer.classList.remove('theme-cozy-room', 'theme-pixel-forest');
+        if (theme !== 'default') bgLayer.classList.add(`theme-${theme}`);
         const activeBtn = document.querySelector(`.bg-option[data-bg="${theme}"]`);
         if (activeBtn) activeBtn.classList.add('active');
     };
