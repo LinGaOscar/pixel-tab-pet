@@ -18,6 +18,7 @@
             <div id="clock-container">
                 <h1 id="time">00:00</h1>
                 <p id="date">2026年5月13日 星期三</p>
+                <p id="pet-count"><span id="pet-count-number">0</span> 隻寵物在逛街</p>
             </div>
 
             <div id="pet-stage">
@@ -25,9 +26,26 @@
             </div>
 
             <div id="action-bar">
-                <button id="add-pet-btn" class="action-btn">
-                    <span>+ 召喚寵物</span>
-                </button>
+                <div class="summon-buttons">
+                    <button id="random-summon-btn" class="action-btn">隨機召喚</button>
+                    <button id="directed-summon-btn" class="action-btn action-btn-secondary">定向召喚 ▾</button>
+                </div>
+                <div id="directed-summon-panel" class="hidden">
+                    <div class="pet-selector">
+                        <button class="pet-option" data-type="cat1">英短貓</button>
+                        <button class="pet-option" data-type="cat2">暹羅貓</button>
+                        <button class="pet-option" data-type="cat3">緬因貓</button>
+                        <button class="pet-option" data-type="dog1">柴犬</button>
+                        <button class="pet-option" data-type="dog2">柯基</button>
+                        <button class="pet-option" data-type="dog3">黃金獵犬</button>
+                        <button class="pet-option" data-type="bird1">老鷹</button>
+                        <button class="pet-option" data-type="bird2">貓頭鷹</button>
+                        <button class="pet-option" data-type="bird3">鸚鵡</button>
+                        <button class="pet-option" data-type="fish1">金魚</button>
+                        <button class="pet-option" data-type="fish2">小丑魚</button>
+                        <button class="pet-option" data-type="fish3">鬥魚</button>
+                    </div>
+                </div>
             </div>
 
             <div id="shortcuts">

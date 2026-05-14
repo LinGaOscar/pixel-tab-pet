@@ -5,7 +5,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settingsPanel = document.getElementById('settings-panel');
     const settingsClose = document.getElementById('settings-close');
     const petStage = document.getElementById('pet-stage');
-    const addPetBtn = document.getElementById('add-pet-btn');
+    const randomSummonBtn = document.getElementById('random-summon-btn');
+    const directedSummonBtn = document.getElementById('directed-summon-btn');
+    const directedSummonPanel = document.getElementById('directed-summon-panel');
+    const petCountEl = document.getElementById('pet-count-number');
     const petListAdmin = document.getElementById('pet-list-admin');
     const bgLayer = document.getElementById('background-layer');
     const houseEl = document.getElementById('pet-house');
@@ -31,22 +34,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         const engine = new PetEngine(petStage, petData);
         petInstances.set(petData.id, engine);
         renderPetAdmin();
+        updatePetCount();
     };
 
     settings.pets.forEach(spawnPet);
 
     // 召喚按鈕
-    addPetBtn.onclick = async () => {
-        const newPet = {
-            id: Date.now(),
-            type: randomPetType(),
-            x: Math.random() * 0.8 + 0.1,
-            y: Math.random() * 0.8 + 0.1
-        };
+    const makePetData = (type) => ({
+        id: Date.now(), type,
+        x: Math.random() * 0.8 + 0.1,
+        y: Math.random() * 0.8 + 0.1
+    });
+
+    randomSummonBtn.onclick = async () => {
+        const newPet = makePetData(randomPetType());
         settings.pets.push(newPet);
         spawnPet(newPet);
         await AppState.save(settings);
     };
+
+    directedSummonBtn.onclick = (e) => {
+        e.stopPropagation();
+        directedSummonPanel.classList.toggle('hidden');
+    };
+
+    directedSummonPanel.querySelectorAll('.pet-option').forEach(btn => {
+        btn.onclick = async () => {
+            const newPet = makePetData(btn.dataset.type);
+            settings.pets.push(newPet);
+            spawnPet(newPet);
+            directedSummonPanel.classList.add('hidden');
+            await AppState.save(settings);
+        };
+    });
+
+    document.addEventListener('click', () => directedSummonPanel.classList.add('hidden'));
 
     // 寵物管理介面
     function renderPetAdmin() {
@@ -64,10 +86,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 petInstances.get(id).destroy();
                 petInstances.delete(id);
                 renderPetAdmin();
+                updatePetCount();
                 await AppState.save(settings);
             };
             petListAdmin.appendChild(item);
         });
+    }
+
+    function updatePetCount() {
+        petCountEl.textContent = settings.pets.length;
     }
 
     // 隨機選出尚未出現的品種；全滿時全域隨機
@@ -89,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         petInstances.get(id).destroy();
         petInstances.delete(id);
         renderPetAdmin();
+        updatePetCount();
         await AppState.save(settings);
     });
 
