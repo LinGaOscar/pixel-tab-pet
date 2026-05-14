@@ -347,6 +347,45 @@ main {
     background: var(--glass-border);
     border-radius: 10px;
 }
+/* 寵物小屋 */
+#pet-house {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    z-index: 10;
+    user-select: none;
+}
+
+.house-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    backdrop-filter: blur(var(--panel-blur));
+    transition: all 0.2s ease;
+}
+
+.house-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+
+#pet-house.drag-over .house-icon {
+    border-color: var(--accent-color);
+    background: rgba(56, 189, 248, 0.25);
+    transform: scale(1.15);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+}
+
 @keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }

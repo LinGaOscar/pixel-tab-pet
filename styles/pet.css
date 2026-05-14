@@ -20,7 +20,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    cursor: pointer;
+    cursor: grab;
     transition: transform 0.1s linear;
     will-change: transform;
 }
@@ -61,6 +61,13 @@
 @keyframes pet-sleep {
     from { background-position: -256px -256px; }
     to   { background-position: -512px -256px; }
+}
+
+/* 拖曳中 */
+.pet.dragging {
+    cursor: grabbing;
+    z-index: 20;
+    transition: none;
 }
 
 /* 狀態 Class */

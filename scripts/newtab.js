@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addPetBtn = document.getElementById('add-pet-btn');
     const petListAdmin = document.getElementById('pet-list-admin');
     const bgLayer = document.getElementById('background-layer');
+    const houseEl = document.getElementById('pet-house');
     const shortcutListAdmin = document.getElementById('shortcut-list-admin');
     const scAddBtn = document.getElementById('sc-add-btn');
     const scName = document.getElementById('sc-name');
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         bird1: '老鷹', bird2: '貓頭鷹', bird3: '鸚鵡',
         fish1: '金魚', fish2: '小丑魚', fish3: '鬥魚'
     };
-    let selectedPetType = 'cat1';
+    const PET_TYPES = Object.keys(PET_NAMES);
 
     // 初始化寵物
     const spawnPet = (petData) => {
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     addPetBtn.onclick = async () => {
         const newPet = {
             id: Date.now(),
-            type: selectedPetType,
+            type: randomPetType(),
             x: Math.random() * 0.8 + 0.1,
             y: Math.random() * 0.8 + 0.1
         };
@@ -69,13 +70,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 種類選擇
-    document.querySelectorAll('.pet-option').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.pet-option').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            selectedPetType = btn.dataset.type;
-        };
+    // 隨機選出尚未出現的品種；全滿時全域隨機
+    function randomPetType() {
+        const used = new Set(settings.pets.map(p => p.type));
+        const available = PET_TYPES.filter(t => !used.has(t));
+        const pool = available.length > 0 ? available : PET_TYPES;
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    // 寵物小屋：拖曳放入即撤回
+    petStage.addEventListener('pet-drop', async (e) => {
+        const { id, clientX, clientY } = e.detail;
+        const rect = houseEl.getBoundingClientRect();
+        const inHouse = clientX >= rect.left && clientX <= rect.right &&
+                        clientY >= rect.top  && clientY <= rect.bottom;
+        if (!inHouse) return;
+        settings.pets = settings.pets.filter(p => p.id !== id);
+        petInstances.get(id).destroy();
+        petInstances.delete(id);
+        renderPetAdmin();
+        await AppState.save(settings);
+    });
+
+    // 拖曳中偵測游標是否懸停在小屋上，給予視覺回饋
+    document.addEventListener('pointermove', (e) => {
+        const anyDragging = [...petInstances.values()].some(p => p.dragging);
+        if (!anyDragging) { houseEl.classList.remove('drag-over'); return; }
+        const rect = houseEl.getBoundingClientRect();
+        const over = e.clientX >= rect.left && e.clientX <= rect.right &&
+                     e.clientY >= rect.top  && e.clientY <= rect.bottom;
+        houseEl.classList.toggle('drag-over', over);
     });
 
     // 快捷入口

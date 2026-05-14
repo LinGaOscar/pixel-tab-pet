@@ -18,6 +18,8 @@ class PetEngine {
         this.speed = 1.5;
         this.currentState = 'idle';
         this.alive = true;
+        this.dragging = false;
+        this._maybeDragging = false;
         this._lastWidth = window.innerWidth;
         this._lastHeight = window.innerHeight;
 
@@ -25,10 +27,47 @@ class PetEngine {
     }
 
     init() {
-        this.el.addEventListener('click', () => this.handleInteraction());
+        let _dragStartX = 0, _dragStartY = 0;
+
+        this.el.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            _dragStartX = e.clientX;
+            _dragStartY = e.clientY;
+            this._maybeDragging = true;
+            e.preventDefault();
+        });
+
+        this._onPointerMove = (e) => {
+            if (!this._maybeDragging) return;
+            if (!this.dragging) {
+                if (Math.abs(e.clientX - _dragStartX) < 5 && Math.abs(e.clientY - _dragStartY) < 5) return;
+                this.dragging = true;
+                this.el.classList.add('dragging');
+                this.setState('idle');
+            }
+            this.posX = e.clientX - 64;
+            this.posY = e.clientY - 64;
+        };
+        window.addEventListener('pointermove', this._onPointerMove);
+
+        this._onPointerUp = (e) => {
+            if (!this._maybeDragging) return;
+            this._maybeDragging = false;
+            if (this.dragging) {
+                this.dragging = false;
+                this.el.classList.remove('dragging');
+                this.el.dispatchEvent(new CustomEvent('pet-drop', {
+                    bubbles: true,
+                    detail: { id: this.id, clientX: e.clientX, clientY: e.clientY }
+                }));
+            } else {
+                this.handleInteraction();
+            }
+        };
+        window.addEventListener('pointerup', this._onPointerUp);
 
         this._onMouseMove = (e) => {
-            if (this.currentState === 'walk' || this.currentState === 'jump') return;
+            if (this.dragging || this.currentState === 'walk' || this.currentState === 'jump') return;
             this.direction = e.clientX > this.posX + 64 ? 1 : -1;
         };
         window.addEventListener('mousemove', this._onMouseMove);
@@ -93,7 +132,7 @@ class PetEngine {
     physicsLoop() {
         const update = () => {
             if (!this.alive) return;
-            if (this.currentState === 'walk') {
+            if (this.currentState === 'walk' && !this.dragging) {
                 const dx = this.targetX - this.posX;
                 const dy = this.targetY - this.posY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -107,10 +146,11 @@ class PetEngine {
                 }
             }
             
-            // Keep within bounds if window resized
-            const margin = 20;
-            this.posX = Math.max(margin, Math.min(window.innerWidth - 128 - margin, this.posX));
-            this.posY = Math.max(margin, Math.min(window.innerHeight - 128 - margin, this.posY));
+            if (!this.dragging) {
+                const margin = 20;
+                this.posX = Math.max(margin, Math.min(window.innerWidth - 128 - margin, this.posX));
+                this.posY = Math.max(margin, Math.min(window.innerHeight - 128 - margin, this.posY));
+            }
 
             this.updateDOM();
             requestAnimationFrame(update);
@@ -124,6 +164,8 @@ class PetEngine {
 
     destroy() {
         this.alive = false;
+        window.removeEventListener('pointermove', this._onPointerMove);
+        window.removeEventListener('pointerup', this._onPointerUp);
         window.removeEventListener('mousemove', this._onMouseMove);
         window.removeEventListener('resize', this._onResize);
         this.el.remove();
