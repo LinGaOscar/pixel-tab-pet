@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const petCountEl = document.getElementById('pet-count-number');
     const petListAdmin = document.getElementById('pet-list-admin');
     const bgLayer = document.getElementById('background-layer');
+    const clearAllBtn = document.getElementById('clear-all-btn');
     const houseEl = document.getElementById('pet-house');
     const shortcutListAdmin = document.getElementById('shortcut-list-admin');
     const scAddBtn = document.getElementById('sc-add-btn');
@@ -69,6 +70,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.addEventListener('click', () => directedSummonPanel.classList.add('hidden'));
+
+    clearAllBtn.onclick = async () => {
+        petInstances.forEach(engine => engine.destroy());
+        petInstances.clear();
+        settings.pets = [];
+        renderPetAdmin();
+        updatePetCount();
+        await AppState.save(settings);
+    };
 
     // 寵物管理介面
     function renderPetAdmin() {

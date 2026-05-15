@@ -19,7 +19,14 @@ class PetEngine {
         this.el = document.createElement('div');
         this.el.id = `pet-${this.id}`;
         this.el.className = `pet pet-${this.type} state-idle`;
+        this.el.style.opacity = '0';
         this.container.appendChild(this.el);
+
+        PetEngine._processSprite(this.type).then(url => {
+            if (!this.alive) return;
+            this.el.style.backgroundImage = `url('${url}')`;
+            this.el.style.opacity = '1';
+        });
 
         this.posX = data.x * window.innerWidth;
         this.posY = this._snapZoneY(data.y * window.innerHeight);
@@ -55,7 +62,7 @@ class PetEngine {
                 if (Math.abs(e.clientX - _dragStartX) < 5 && Math.abs(e.clientY - _dragStartY) < 5) return;
                 this.dragging = true;
                 this.el.classList.add('dragging');
-                this.setState('idle');
+                this.setState('drag');
             }
             this.posX = e.clientX - this._sz / 2;
             this.posY = e.clientY - this._sz / 2;
@@ -68,6 +75,7 @@ class PetEngine {
             if (this.dragging) {
                 this.dragging = false;
                 this.el.classList.remove('dragging');
+                this.setState('idle');
                 this.el.dispatchEvent(new CustomEvent('pet-drop', {
                     bubbles: true,
                     detail: { id: this.id, clientX: e.clientX, clientY: e.clientY }
@@ -79,7 +87,7 @@ class PetEngine {
         window.addEventListener('pointerup', this._onPointerUp);
 
         this._onMouseMove = (e) => {
-            if (this.dragging || this.currentState === 'walk' || this.currentState === 'jump') return;
+            if (this.dragging || this.currentState === 'walk' || this.currentState === 'move2' || this.currentState === 'interact') return;
             this.direction = e.clientX > this.posX + this._sz / 2 ? 1 : -1;
         };
         window.addEventListener('mousemove', this._onMouseMove);
@@ -144,7 +152,7 @@ class PetEngine {
     }
 
     handleInteraction() {
-        this.setState('jump');
+        this.setState('interact');
         setTimeout(() => this.setState('idle'), 1000);
     }
 
@@ -156,14 +164,17 @@ class PetEngine {
 
             if (this.currentState === 'idle') {
                 if (this.isGroundPet()) {
-                    // 狗貓：只在地板水平移動
+                    // 狗貓：只在地板水平移動，30% 機率衝刺
                     if (Math.random() < 0.4) {
-                        this.setState('walk');
+                        this.setState(Math.random() < 0.3 ? 'move2' : 'walk');
                         this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
                         this.targetY = z.groundY;
                         this.direction = this.targetX > this.posX ? 1 : -1;
                     } else if (Math.random() < 0.1) {
                         this.setState('sleep');
+                    } else if (Math.random() < 0.12) {
+                        this.setState('play');
+                        setTimeout(() => { if (this.alive && this.currentState === 'play') this.setState('idle'); }, 2000 + Math.random() * 2000);
                     }
 
                 } else if (this.isAirPet()) {
@@ -197,9 +208,9 @@ class PetEngine {
                     }
 
                 } else if (this.isWaterPet()) {
-                    // 魚類：在水層自由游動
+                    // 魚類：在水層自由游動，30% 機率快速衝刺
                     if (Math.random() < 0.4) {
-                        this.setState('walk');
+                        this.setState(Math.random() < 0.3 ? 'move2' : 'walk');
                         this.targetX = margin + Math.random() * (window.innerWidth - margin * 2 - this._sz);
                         this.targetY = z.waterMinY + Math.random() * (z.waterMaxY - z.waterMinY);
                         this.direction = this.targetX > this.posX ? 1 : -1;
@@ -219,14 +230,15 @@ class PetEngine {
     physicsLoop() {
         const update = () => {
             if (!this.alive) return;
-            if (this.currentState === 'walk' && !this.dragging) {
+            if ((this.currentState === 'walk' || this.currentState === 'move2') && !this.dragging) {
                 const dx = this.targetX - this.posX;
                 const dy = this.targetY - this.posY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist > 5) {
-                    this.posX += (dx / dist) * this.speed;
-                    this.posY += (dy / dist) * this.speed;
+                    const spd = this.currentState === 'move2' ? this.speed * 2.5 : this.speed;
+                    this.posX += (dx / dist) * spd;
+                    this.posY += (dy / dist) * spd;
                     this.direction = dx > 0 ? 1 : -1;
                 } else {
                     this.setState('idle');
@@ -252,6 +264,76 @@ class PetEngine {
 
     updateDOM() {
         this.el.style.transform = `translate(${this.posX}px, ${this.posY}px) scaleX(${this.direction})`;
+    }
+
+    static _processSprite(type) {
+        if (!PetEngine._cache) PetEngine._cache = {};
+        if (PetEngine._cache[type]) return PetEngine._cache[type];
+
+        const p = new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+                const cvs = document.createElement('canvas');
+                cvs.width = img.naturalWidth;
+                cvs.height = img.naturalHeight;
+                const ctx = cvs.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                const W = cvs.width, H = cvs.height;
+                const px = ctx.getImageData(0, 0, W, H);
+                const d = px.data;
+
+                // 掃描全部四邊，統計頻率最高的顏色（棋盤格兩色都會出現）
+                const freq = {};
+                const addSample = (x, y) => {
+                    const i = (y * W + x) * 4;
+                    const k = `${d[i] >> 4},${d[i + 1] >> 4},${d[i + 2] >> 4}`;
+                    freq[k] = (freq[k] || 0) + 1;
+                };
+                for (let x = 0; x < W; x++) { addSample(x, 0); addSample(x, H - 1); }
+                for (let y = 1; y < H - 1; y++) { addSample(0, y); addSample(W - 1, y); }
+
+                const bgColors = Object.entries(freq)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 4)
+                    .map(([k]) => k.split(',').map(n => +n * 16 + 8));
+
+                const tol = 55;
+                const isBg = (i) => {
+                    const r = d[i], g = d[i + 1], b = d[i + 2];
+                    return bgColors.some(([br, bg, bb]) =>
+                        Math.abs(r - br) + Math.abs(g - bg) + Math.abs(b - bb) < tol
+                    );
+                };
+
+                // BFS flood fill 從四邊向內清除背景，不影響寵物內部像素
+                const visited = new Uint8Array(W * H);
+                const stack = [];
+                const tryPush = (x, y) => {
+                    if (x < 0 || x >= W || y < 0 || y >= H) return;
+                    const idx = y * W + x;
+                    if (visited[idx]) return;
+                    visited[idx] = 1;
+                    if (isBg(idx * 4)) { d[idx * 4 + 3] = 0; stack.push(x, y); }
+                };
+
+                for (let x = 0; x < W; x++) { tryPush(x, 0); tryPush(x, H - 1); }
+                for (let y = 1; y < H - 1; y++) { tryPush(0, y); tryPush(W - 1, y); }
+                while (stack.length) {
+                    const y = stack.pop();
+                    const x = stack.pop();
+                    tryPush(x + 1, y); tryPush(x - 1, y);
+                    tryPush(x, y + 1); tryPush(x, y - 1);
+                }
+
+                ctx.putImageData(px, 0, 0);
+                resolve(cvs.toDataURL());
+            };
+            img.src = `../assets/pets/${type}.png`;
+        });
+
+        PetEngine._cache[type] = p;
+        return p;
     }
 
     destroy() {

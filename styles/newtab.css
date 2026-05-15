@@ -152,6 +152,18 @@ main {
     box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
 }
 
+.action-btn-danger {
+    background: transparent;
+    border: 2px solid #f87171;
+    color: #f87171;
+    box-shadow: none;
+}
+
+.action-btn-danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+    box-shadow: 0 4px 15px rgba(248, 113, 113, 0.2);
+}
+
 #directed-summon-panel {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);

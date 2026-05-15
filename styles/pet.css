@@ -1,21 +1,19 @@
 /*
- * Sprite Sheet 規格（每張 PNG 均為 1024×1024）：
- *   4 欄 × 4 排，每格原始 256×256px
- *   顯示縮放 0.5x → 顯示尺寸 128×128，background-size: 512px 512px
- *
- * 排列：
- *   Row 0 (y=   0): 待機 4 幀
- *   Row 1 (y=-128): 走路 4 幀
- *   Row 2 (y=-256): 跳躍 2 幀 (x=0,-128) | 睡覺 2 幀 (x=-256,-384)
- *   Row 3 (y=-384): 配件圖示（動畫不使用）
+ * Sprite Sheet 規格（2 欄 × 7 列，每格 256×256px）：
+ *   Row 0: Idle     2幀
+ *   Row 1: Move1    2幀（走路）
+ *   Row 2: Move2    2幀（跑步）
+ *   Row 3: Sleep    2幀（休息）
+ *   Row 4: Drag     2幀（拖曳）
+ *   Row 5: Play     2幀（玩耍）
+ *   Row 6: Interact 2幀（點擊互動）
  */
 
 #pet-stage .pet {
     width: var(--pet-size);
     height: var(--pet-size);
     image-rendering: pixelated;
-    /* background-size = 4×pet-size，對應 1024px 縮放後的 sprite sheet */
-    background-size: calc(4 * var(--pet-size)) calc(4 * var(--pet-size));
+    background-size: calc(2 * var(--pet-size)) calc(7 * var(--pet-size));
     background-repeat: no-repeat;
     position: absolute;
     top: 0;
@@ -39,28 +37,33 @@
 .pet-fish2 { background-image: url('../assets/pets/fish2.png'); }
 .pet-fish3 { background-image: url('../assets/pets/fish3.png'); }
 
-/* Row 0：待機 4 幀 */
 @keyframes pet-idle {
     from { background-position: 0 0; }
-    to   { background-position: calc(-4 * var(--pet-size)) 0; }
+    to   { background-position: calc(-2 * var(--pet-size)) 0; }
 }
-
-/* Row 1：走路 4 幀 */
 @keyframes pet-walk {
     from { background-position: 0 calc(-1 * var(--pet-size)); }
-    to   { background-position: calc(-4 * var(--pet-size)) calc(-1 * var(--pet-size)); }
+    to   { background-position: calc(-2 * var(--pet-size)) calc(-1 * var(--pet-size)); }
 }
-
-/* Row 2 前半：跳躍 2 幀 */
-@keyframes pet-jump {
+@keyframes pet-move2 {
     from { background-position: 0 calc(-2 * var(--pet-size)); }
     to   { background-position: calc(-2 * var(--pet-size)) calc(-2 * var(--pet-size)); }
 }
-
-/* Row 2 後半：睡覺 2 幀 */
 @keyframes pet-sleep {
-    from { background-position: calc(-2 * var(--pet-size)) calc(-2 * var(--pet-size)); }
-    to   { background-position: calc(-4 * var(--pet-size)) calc(-2 * var(--pet-size)); }
+    from { background-position: 0 calc(-3 * var(--pet-size)); }
+    to   { background-position: calc(-2 * var(--pet-size)) calc(-3 * var(--pet-size)); }
+}
+@keyframes pet-drag {
+    from { background-position: 0 calc(-4 * var(--pet-size)); }
+    to   { background-position: calc(-2 * var(--pet-size)) calc(-4 * var(--pet-size)); }
+}
+@keyframes pet-play {
+    from { background-position: 0 calc(-5 * var(--pet-size)); }
+    to   { background-position: calc(-2 * var(--pet-size)) calc(-5 * var(--pet-size)); }
+}
+@keyframes pet-interact {
+    from { background-position: 0 calc(-6 * var(--pet-size)); }
+    to   { background-position: calc(-2 * var(--pet-size)) calc(-6 * var(--pet-size)); }
 }
 
 /* 拖曳中 */
@@ -71,7 +74,10 @@
 }
 
 /* 狀態 Class */
-.state-idle  { animation: pet-idle  0.8s steps(4) infinite; }
-.state-walk  { animation: pet-walk  0.6s steps(4) infinite; }
-.state-jump  { animation: pet-jump  0.4s steps(2) infinite; }
-.state-sleep { animation: pet-sleep 1.5s steps(2) infinite; }
+.state-idle     { animation: pet-idle     0.8s steps(2) infinite; }
+.state-walk     { animation: pet-walk     0.6s steps(2) infinite; }
+.state-move2    { animation: pet-move2    0.4s steps(2) infinite; }
+.state-sleep    { animation: pet-sleep    1.5s steps(2) infinite; }
+.state-drag     { animation: pet-drag     0.3s steps(2) infinite; }
+.state-play     { animation: pet-play     0.8s steps(2) infinite; }
+.state-interact { animation: pet-interact 0.5s steps(2) infinite; }
